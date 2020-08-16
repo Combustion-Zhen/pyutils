@@ -24,7 +24,7 @@ def premixed_flame_state(flame, fuel, T=None):
     T_peak = flame.T[idx]
     sd = flame.u[idx]
 
-    strain_rate = -np.gradient(flame.u, flame.grid)
+    strain_rate = 2. * flame.V
     K = strain_rate[idx]
 
     if T is not None:
