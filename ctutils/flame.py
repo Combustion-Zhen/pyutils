@@ -5,128 +5,279 @@ class PremixedFlameState:
 
     def __init__(self, flame, fuel, T=None):
 
-        sc, df, T, sd, K = premixed_flame_state(flame, fuel, T=T)
+        self.flame = flame
+        self.fuel = fuel
+        self.T = T
 
-        self.sc = sc
-        self.df = df
-        self.T_peak = T
-        self.sd = sd
-        self.K = K
+    def __idx_unburnt(self):
+        return 0
 
-def premixed_flame_state(flame, fuel, T=None):
+    def __idx_fcr(self):
+        fcr = self.fuel_consumption_rate()
+        return np.argmax(fcr)
+
+    def __idx_T(self):
+        T = self.flame.T
+        return np.argmax(T)
+
+    def consumption_speed(self):
+
+        flame = self.flame
+        fuel = self.fuel
+
+        # check the fuel info
+        if isinstance( fuel, str ):
+            # single component
+            fuel_list = [fuel,]
+        elif isinstance( fuel, list ):
+            fuel_list = fuel
+
+        fuel_rate = np.zeros( len(fuel_list) )
+        fuel_mass = np.zeros( len(fuel_list) )
+
+        for i, s in enumerate(fuel_list):
+
+            # get species index
+            index = flame.gas.species_index( s )
+
+            # calculate fuel consumption
+            fuel_rate[i] = - ( np.trapz(flame.net_production_rates[index],
+                                        flame.grid)
+                            *flame.gas.molecular_weights[index] )
+
+            # fuel mass fraction difference
+            fuel_mass[i] = flame.Y[index, 0] - flame.Y[index,-1]
+
+        fuel_rate_sum = np.sum( fuel_rate )
+        fuel_mass_sum = np.sum( fuel_mass )
+
+        sc = fuel_rate_sum / ( flame.density[0] * fuel_mass_sum )
+
+        return sc
+
+    def mass_flux(self):
+        return self.consumption_speed()*self.flame.density[0]
+
+    def fuel_consumption_rate(self):
+
+        flame = self.flame
+        fuel = self.fuel
+
+        # check the fuel info
+        if isinstance( fuel, str ):
+            # single component
+            fuel_list = [fuel,]
+        elif isinstance( fuel, list ):
+            fuel_list = fuel
+
+        fuel_rate = np.zeros((len(fuel_list), flame.T.size))
+
+        for i, s, in enumerate(fuel_list):
+
+            # get species index
+            index = flame.gas.species_index( s )
+
+            fuel_rate[i] = (-flame.net_production_rates[index]
+                            *flame.gas.molecular_weights[index] )
+
+        fuel_consumption_rate = np.sum( fuel_rate, axis=0 ) 
+
+        return fuel_consumption_rate
+
+    def thermal_thickness(self):
+
+        T = self.flame.T
+        x = self.flame.grid
+
+        T_grad = np.gradient( T, x )
+        T_grad_max = T_grad.max()
+
+        delta = ( T[-1] - T[0] ) / T_grad_max
+
+        return delta
+
+    def T_peak(self):
+        return self.flame.T[self.__idx_fcr()]
+
+    def displacement_speed(self):
+
+        if self.T is not None:
+            return np.interp(self.T, self.flame.T, self.flame.u)
+
+        return self.flame.u[self.__idx_fcr()]
+
+    def strain_rate(self):
+        
+        at = 2. * self.flame.V
+
+        if self.T is not None:
+            return np.interp(self.T, self.flame.T, at)
+
+        return at[self.__idx_fcr()]
     
-    sc = consumption_speed(flame, fuel)
-    df = thermal_thickness(flame)
+    def Ka(self):
 
-    fcr = fuel_consumption_rate(flame, fuel)
-    idx = np.argmax(fcr)
+        at = self.strain_rate()
+        df = self.thermal_thickness()
+        sc = self.consumption_speed()
 
-    T_peak = flame.T[idx]
-    sd = flame.u[idx]
+        return at * df / sc
 
-    strain_rate = 2. * flame.V
-    K = strain_rate[idx]
+    def Re(self):
 
-    if T is not None:
-        sd = np.interp(T, flame.T, flame.u)
-        K = np.interp(T, flame.T, strain_rate)
+        df = self.thermal_thickness()
+        sc = self.consumption_speed()
 
-    return sc, df, T_peak, sd, K
+        rho_u = self.flame.density[0]
+        mu_u = self.flame.viscosity[0]
 
-def consumption_speed(flame, fuel):
+        return sc * df * rho_u / mu_u
 
-    # check the fuel info
-    if isinstance( fuel, str ):
-        # single component
-        fuel_list = [fuel,]
-    elif isinstance( fuel, list ):
-        fuel_list = fuel
+    def Le_eff(self, type_idx='T', type_mix='linear'):
 
-    fuel_rate = np.zeros( len(fuel_list) )
-    fuel_mass = np.zeros( len(fuel_list) )
+        phi = self.equivalence_ratio()
 
-    for i, s in enumerate(fuel_list):
+        def mix_linear(phi):
+            if phi < 0.8:
+                return [1., 0.]
+            elif phi > 1.2:
+                return [0., 1.]
+            else:
+                return [3.-2.5*phi, 2.5*phi-2.]
 
-        # get species index
-        index = flame.gas.species_index( s )
+        Le_spe_eff = self.Le_species_eff(type_idx)
 
-        # calculate fuel consumption
-        fuel_rate[i] = - ( np.trapz(flame.net_production_rates[index],
-                                    flame.grid)
-                          *flame.gas.molecular_weights[index] )
+        Le_F = self.Le_fuel(Le_spe_eff)
 
-        # fuel mass fraction difference
-        fuel_mass[i] = flame.Y[index, 0] - flame.Y[index,-1]
+        Le_O = self.Le_oxidizer(Le_spe_eff)
 
-    fuel_rate_sum = np.sum( fuel_rate )
-    fuel_mass_sum = np.sum( fuel_mass )
+        switch = {'linear':mix_linear}
 
-    sc = fuel_rate_sum / ( flame.density[0] * fuel_mass_sum )
+        c = switch.get(type_mix)(phi)
 
-    return sc
+        Le_eff = c[0]*Le_F+c[1]*Le_O
 
-def fuel_consumption_rate(flame, fuel):
+        return Le_eff
 
-    # check the fuel info
-    if isinstance( fuel, str ):
-        # single component
-        fuel_list = [fuel,]
-    elif isinstance( fuel, list ):
-        fuel_list = fuel
+    def Le_fuel(self, Le_spe):
 
-    fuel_rate = np.zeros((len(fuel_list), flame.T.size))
+        flame = self.flame
+        fuel = self.fuel
+        # check the fuel info
+        if isinstance( fuel, str ):
+            # single component
+            fuel_list = [fuel,]
+        elif isinstance( fuel, list ):
+            fuel_list = fuel
 
-    for i, s, in enumerate(fuel_list):
+        sum_X = 0.
+        sum_Le = 0.
+        for i, s, in enumerate(fuel_list):
+            # get species index
+            idx = flame.gas.species_index( s )
+            sum_X += flame.X[idx][0]
+            sum_Le += flame.X[idx][0] * Le_spe[idx]
 
-        # get species index
-        index = flame.gas.species_index( s )
+        Le_F = sum_Le / sum_X
 
-        fuel_rate[i] = (-flame.net_production_rates[index]
-                        *flame.gas.molecular_weights[index] )
+        return Le_F
 
-    fuel_consumption_rate = np.sum( fuel_rate, axis=0 ) 
+    def Le_oxidizer(self, Le_spe):
+        
+        idx = self.flame.gas.species_index('O2')
 
-    return fuel_consumption_rate
+        return Le_spe[idx]
 
-def thermal_thickness(flame):
+    def Le_species_eff(self, type_Le):
 
-    T_grad = np.gradient( flame.T, flame.grid )
-    T_grad_max = T_grad.max()
+        Le_spe = self.Le_species()
 
-    delta = ( flame.T[-1] - flame.T[0] ) / T_grad_max
+        switch = {'T':self.__idx_T,
+                  'fcr':self.__idx_fcr,
+                  'unburnt':self.__idx_unburnt}
 
-    return delta
+        idx = switch.get(type_Le)()
 
-def export_profile(f, file_name='premix.dat', unit='cgs'):
+        Le_spe_eff = Le_spe[:,idx]
 
-    # export cantera flame result in the form of premix output
-    # variable names    (A20)
-    # X, U, RHO, Y, T   (E20.10)
+        return Le_spe_eff
 
-    # unit system
-    # SI
-    convertor_length = 1.0
-    convertor_density = 1.0
-    # cgs
-    if unit == 'cgs':
-        convertor_length = 1.0E+02
-        convertor_density = 1.0E-03
+    def Le_species(self):
 
-    # variale names
-    species_names =  f.gas.species_names
-    variable_names = ['X', 'U', 'RHO'] + species_names +['T',]
-    str_names = ''.join(['{:>20}'.format(n) for n in variable_names])
+        kappa = self.flame.thermal_conductivity
+        cp = self.flame.cp
+        rho = self.flame.density
 
-    # data for output
-    data = np.zeros((f.grid.size, len(variable_names)))
+        alpha = kappa / (rho*cp)
 
-    data[:,0] = f.grid * convertor_length
-    data[:,1] = f.u * convertor_length
-    data[:,2] = f.density * convertor_density
-    data[:,3:-1] = f.Y.transpose()
-    data[:,-1] = f.T
+        D = self.flame.mix_diff_coeffs
 
-    np.savetxt(file_name, data, fmt='%20.10E', delimiter='', 
-               header=str_names, comments='')
+        Le_spe = np.empty(D.shape)
 
-    return 0
+        for i, D_spe in enumerate(D):
+            Le_spe[i] = alpha / D_spe
+
+        return Le_spe
+
+    def equivalence_ratio(self):
+        gas = self.flame.gas
+        gas.TPY = gas.T, gas.P, self.flame.Y[:,0]
+        return gas.get_equivalence_ratio()
+
+    def export_profile(self, file_name='premix.dat', unit='cgs'):
+
+        f = self.flame
+
+        # export cantera flame result in the form of premix output
+        # variable names    (A20)
+        # X, U, RHO, Y, T   (E20.10)
+
+        # unit system
+        # SI
+        convertor_length = 1.0
+        convertor_density = 1.0
+        # cgs
+        if unit == 'cgs':
+            convertor_length = 1.0E+02
+            convertor_density = 1.0E-03
+
+        # variale names
+        species_names =  f.gas.species_names
+        variable_names = ['X', 'U', 'RHO'] + species_names +['T',]
+        str_names = ''.join(['{:>20}'.format(n) for n in variable_names])
+
+        # data for output
+        data = np.zeros((f.grid.size, len(variable_names)))
+
+        data[:,0] = f.grid * convertor_length
+        data[:,1] = f.u * convertor_length
+        data[:,2] = f.density * convertor_density
+        data[:,3:-1] = f.Y.transpose()
+        data[:,-1] = f.T
+
+        np.savetxt(file_name, data, fmt='%20.10E', delimiter='', 
+                header=str_names, comments='')
+
+        return 0
+
+class FreeFlameState(PremixedFlameState):
+
+    def __init__(self, chemistry, fuel, solution):
+
+        gas = ct.Solution(chemistry)
+        flame = ct.FreeFlame(gas, width=0.1)
+
+        flame.restore(solution, loglevel=0)
+
+        PremixedFlameState.__init__(self, flame, fuel)
+        
+class CounterflowPremixedFlameState(PremixedFlameState):
+
+    def __init__(self, chemistry, fuel, solution, T):
+
+        gas = ct.Solution(chemistry)
+        flame = ct.CounterflowPremixedFlame(gas, width=0.1)
+
+        flame.restore(solution, loglevel=0)
+
+        PremixedFlameState.__init__(self, flame, fuel, T)

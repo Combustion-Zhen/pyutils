@@ -21,7 +21,7 @@ def config_uniform_subplots(
 
     subplot_height = subplot_width * ratio
 
-    plot_height = ( shape[0] * subplotHeight
+    plot_height = ( shape[0] * subplot_height
                   + margin[1] + margin[3]
                   + ( shape[0] -1 ) * space[0] )
 
