@@ -1,6 +1,14 @@
 import numpy as np
 import cantera as ct
 
+def mixture(chemistry, fuel, oxidizer, T, P, phi):
+
+    gas = ct.Solution(chemistry)
+    gas.set_equivalence_ratio(phi, fuel, oxidizer)
+    gas.TP = T, P
+
+    return gas
+
 def mixture_two_streams(gas, fuel, oxidizer, phi):
     # get mixture by two streams and equivalence ratio
 

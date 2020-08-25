@@ -80,24 +80,24 @@ def counterflow_premixed_flame(
 
     case = params2name(params)
 
-    # gas object
-    gas = ct.Solution(chemistry)
-
     # pressure
     pressure *= ct.one_atm
 
+    # gas object
+    #gas = ct.Solution(chemistry)
     # construct mixutre
-    mixture = cg.mixture_two_streams(gas, fuel, oxidizer, phi)
-
+    #mixture = cg.mixture_two_streams(gas, fuel, oxidizer, phi)
     # unburnt stream
-    gas.TPX = temperature, pressure, mixture
+    #gas.TPX = temperature, pressure, mixture
+    gas = cg.mixture(chemistry, fuel, oxidizer, temperature, pressure, phi)
+
     rho_u = gas.density
 
     # burnt stream
     gas.equilibrate('HP')
     rho_b = gas.density
 
-    gas.TPX = temperature, pressure, mixture
+    gas = cg.mixture(chemistry, fuel, oxidizer, temperature, pressure, phi)
 
     # get inlet velocity based on the strain rate
     # $a_1=\dfrac{2U_1}{L}\left(1+\dfrac{U_2\sqrt{\rho_2}}{U_1\sqrt{\rho_1}}\right)$

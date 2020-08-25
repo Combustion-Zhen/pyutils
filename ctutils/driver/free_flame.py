@@ -59,9 +59,6 @@ def free_flame(
     else:
         ct_prune = 0.01
 
-    # gas object
-    gas = ct.Solution(chemistry)
-
     # parameters
     params = {}
     params['T'] = temperature
@@ -73,11 +70,13 @@ def free_flame(
     # pressure, convert to [Pa]
     pressure *= ct.one_atm
 
+    # gas object
+    #gas = ct.Solution(chemistry)
     # construct mixture
-    mixture = cg.mixture_two_streams( gas, fuel, oxidizer, phi )
-
+    #mixture = cg.mixture_two_streams( gas, fuel, oxidizer, phi )
     # assign inlet gas properties
-    gas.TPX = temperature, pressure, mixture
+    #gas.TPX = temperature, pressure, mixture
+    gas = cg.mixture(chemistry, fuel, oxidizer, temperature, pressure, phi)
 
     # flame object
     f = ct.FreeFlame( gas, width=width )
