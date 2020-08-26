@@ -6,7 +6,16 @@ class PremixedFlameState:
     def __init__(self, flame, fuel, T=None):
 
         self.flame = flame
-        self.fuel = fuel
+
+        if isinstance( fuel, dict ):
+            self.fuel = list(fuel.keys())
+        elif isinstance( fuel, list ):
+            self.fuel = fuel
+        elif isinstance( fuel, str ):
+            self.fuel = [fuel,]
+        else:
+            raise TypeError
+
         self.T = T
 
     def __idx_unburnt(self):
@@ -23,19 +32,12 @@ class PremixedFlameState:
     def consumption_speed(self):
 
         flame = self.flame
-        fuel = self.fuel
+        fuels = self.fuel
 
-        # check the fuel info
-        if isinstance( fuel, str ):
-            # single component
-            fuel_list = [fuel,]
-        elif isinstance( fuel, list ):
-            fuel_list = fuel
+        fuel_rate = np.zeros( len(fuels) )
+        fuel_mass = np.zeros( len(fuels) )
 
-        fuel_rate = np.zeros( len(fuel_list) )
-        fuel_mass = np.zeros( len(fuel_list) )
-
-        for i, s in enumerate(fuel_list):
+        for i, s in enumerate(fuels):
 
             # get species index
             index = flame.gas.species_index( s )
@@ -61,18 +63,11 @@ class PremixedFlameState:
     def fuel_consumption_rate(self):
 
         flame = self.flame
-        fuel = self.fuel
+        fuels = self.fuel
 
-        # check the fuel info
-        if isinstance( fuel, str ):
-            # single component
-            fuel_list = [fuel,]
-        elif isinstance( fuel, list ):
-            fuel_list = fuel
+        fuel_rate = np.zeros((len(fuels), flame.T.size))
 
-        fuel_rate = np.zeros((len(fuel_list), flame.T.size))
-
-        for i, s, in enumerate(fuel_list):
+        for i, s, in enumerate(fuels):
 
             # get species index
             index = flame.gas.species_index( s )
@@ -145,13 +140,20 @@ class PremixedFlameState:
             else:
                 return [3.-2.5*phi, 2.5*phi-2.]
 
+        def mix_Bechtold(phi):
+            if phi < 0.8:
+                return [1., 0.]
+            elif phi > 1.2:
+                return [0., 1.]
+
         Le_spe_eff = self.Le_species_eff(type_idx)
 
         Le_F = self.Le_fuel(Le_spe_eff)
 
         Le_O = self.Le_oxidizer(Le_spe_eff)
 
-        switch = {'linear':mix_linear}
+        switch = {'linear':mix_linear, 
+                  'Bechtold':mix_Bechtold}
 
         c = switch.get(type_mix)(phi)
 
@@ -162,17 +164,11 @@ class PremixedFlameState:
     def Le_fuel(self, Le_spe):
 
         flame = self.flame
-        fuel = self.fuel
-        # check the fuel info
-        if isinstance( fuel, str ):
-            # single component
-            fuel_list = [fuel,]
-        elif isinstance( fuel, list ):
-            fuel_list = fuel
+        fuels = self.fuel
 
         sum_X = 0.
         sum_Le = 0.
-        for i, s, in enumerate(fuel_list):
+        for i, s, in enumerate(fuels):
             # get species index
             idx = flame.gas.species_index( s )
             sum_X += flame.X[idx][0]
