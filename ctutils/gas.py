@@ -1,5 +1,6 @@
 import numpy as np
 import cantera as ct
+from pyutils.filename import name2params
 
 def mixture(chemistry, fuel, oxidizer, T, P, phi):
 
@@ -8,6 +9,13 @@ def mixture(chemistry, fuel, oxidizer, T, P, phi):
     gas.TP = T, P
 
     return gas
+
+def parser_stream(stream):
+
+    if isinstance( stream, dict ):
+        return stream
+    elif isinstance( stream, str ):
+        return name2params(stream, s1=',', s2=':', default=1.)
 
 def mixture_two_streams(gas, fuel, oxidizer, phi):
     # get mixture by two streams and equivalence ratio

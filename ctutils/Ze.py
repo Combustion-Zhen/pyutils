@@ -1,4 +1,4 @@
-# calculate the Zeldovich number by perturb nitrogen percentage in oxizider
+# calculate the Zeldovich number by perturb nitrogen percentage in oxidizer
 
 import os
 import numpy as np
@@ -8,7 +8,7 @@ from pyutils.filename import params2name
 def Ze(
     chemistry = 'FFCM-1.cti',
     fuel = {'CH4':1.},
-    oxizider = {'O2':1., 'N2':3.76},
+    oxidizer = {'O2':1., 'N2':3.76},
     T = 300.,
     p = 1., 
     phi = 1.,
@@ -47,13 +47,13 @@ def Ze(
 
             # oxidizer stream with perturbation
             stream = {}
-            for k, v in oxizider.items():
+            for k, v in oxidizer.items():
                 stream[k] = v
-            stream['N2'] = oxizider['N2'] * f
+            stream['N2'] = oxidizer['N2'] * f
 
             pc.driver.free_flame(chemistry, fuel, stream, T, p, phi, **kwargs)
 
-        fs = pc.flame.FreeFlameState(chemistry, fuel, solution)
+        fs = pc.flame.FreeFlameState(solution, chemistry, fuel, oxidizer)
 
         flux[i] = fs.mass_flux()
         Tb[i] = fs.flame.T[-1]

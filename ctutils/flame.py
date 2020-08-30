@@ -1,21 +1,15 @@
 import numpy as np
 import cantera as ct
+import pyutils.ctutils as pc
+from scipy.special import erfc
 
 class PremixedFlameState:
 
-    def __init__(self, flame, fuel, T=None):
+    def __init__(self, flame, fuel, oxidizer={'O2':1., 'N2':3.76}, T=None):
 
         self.flame = flame
-
-        if isinstance( fuel, dict ):
-            self.fuel = list(fuel.keys())
-        elif isinstance( fuel, list ):
-            self.fuel = fuel
-        elif isinstance( fuel, str ):
-            self.fuel = [fuel,]
-        else:
-            raise TypeError
-
+        self.fuel = pc.gas.parser_stream(fuel)
+        self.oxidizer = pc.gas.parser_stream(oxidizer)
         self.T = T
 
     def __idx_unburnt(self):
@@ -29,10 +23,13 @@ class PremixedFlameState:
         T = self.flame.T
         return np.argmax(T)
 
+    def fuel_list(self):
+        return list(self.fuel.keys())
+
     def consumption_speed(self):
 
         flame = self.flame
-        fuels = self.fuel
+        fuels = self.fuel_list()
 
         fuel_rate = np.zeros( len(fuels) )
         fuel_mass = np.zeros( len(fuels) )
@@ -63,7 +60,7 @@ class PremixedFlameState:
     def fuel_consumption_rate(self):
 
         flame = self.flame
-        fuels = self.fuel
+        fuels = self.fuel_list()
 
         fuel_rate = np.zeros((len(fuels), flame.T.size))
 
@@ -128,43 +125,10 @@ class PremixedFlameState:
 
         return sc * df * rho_u / mu_u
 
-    def Le_eff(self, type_idx='T', type_mix='linear'):
-
-        phi = self.equivalence_ratio()
-
-        def mix_linear(phi):
-            if phi < 0.8:
-                return [1., 0.]
-            elif phi > 1.2:
-                return [0., 1.]
-            else:
-                return [3.-2.5*phi, 2.5*phi-2.]
-
-        def mix_Bechtold(phi):
-            if phi < 0.8:
-                return [1., 0.]
-            elif phi > 1.2:
-                return [0., 1.]
-
-        Le_spe_eff = self.Le_species_eff(type_idx)
-
-        Le_F = self.Le_fuel(Le_spe_eff)
-
-        Le_O = self.Le_oxidizer(Le_spe_eff)
-
-        switch = {'linear':mix_linear, 
-                  'Bechtold':mix_Bechtold}
-
-        c = switch.get(type_mix)(phi)
-
-        Le_eff = c[0]*Le_F+c[1]*Le_O
-
-        return Le_eff
-
     def Le_fuel(self, Le_spe):
 
         flame = self.flame
-        fuels = self.fuel
+        fuels = self.fuel_list()
 
         sum_X = 0.
         sum_Le = 0.
@@ -258,22 +222,111 @@ class PremixedFlameState:
 
 class FreeFlameState(PremixedFlameState):
 
-    def __init__(self, chemistry, fuel, solution):
+    def __init__(self, solution, chemistry, fuel, oxidizer={'O2':1., 'N2':3.76}):
+
+        self.chemistry = chemistry
 
         gas = ct.Solution(chemistry)
         flame = ct.FreeFlame(gas, width=0.1)
 
         flame.restore(solution, loglevel=0)
 
-        PremixedFlameState.__init__(self, flame, fuel)
+        PremixedFlameState.__init__(self, flame, fuel, oxidizer)
+
+    def Ze(self, perturb=0.01, **kwargs):
+
+        chemistry = self.chemistry
+        fuel = self.fuel
+        oxidizer = self.oxidizer
+        T = self.flame.T[0]
+        p = self.flame.P / ct.one_atm
+        phi = self.equivalence_ratio()
+
+        return pc.Ze(chemistry, fuel, oxidizer, T, p, phi, perturb, **kwargs)
         
+    def Le_eff(self, type_idx='unburnt', type_mix='erf'):
+
+        def mix_linear(Le_F, Le_O, phi):
+            if phi < 0.8:
+                return Le_F
+            elif phi > 1.2:
+                return Le_O
+            else:
+                return (3.-2.5*phi)*Le_F+(2.5*phi-2.)*Le_O
+
+        def mix_erf(Le_F, Le_O, phi):
+            Ze = self.Ze()
+            phi_n = phi/(1.+phi)
+            x = Ze*(phi_n-0.5)*2.
+            f = erfc(x)
+            return Le_O + (Le_F-Le_O)*f/2.
+
+        def mix_Bechtold(Le_F, Le_O, phi):
+
+            Ze = self.Ze()
+
+            if phi < 1.:
+                phi_ = 1./phi
+                Le_E = Le_O
+                Le_D = Le_F
+            else:
+                phi_ = phi
+                Le_E = Le_F
+                Le_D = Le_O
+
+            A = 1. + Ze * ( phi_ - 1. )
+
+            return (Le_E+Le_D*A)/(1.+A)
+
+        def mix_Bechtold_cut(Le_F, Le_O, phi):
+            
+            if phi < 0.8:
+                return Le_F
+            elif phi > 1.2:
+                return Le_O
+            else:
+                return mix_Bechtold(Le_F, Le_O, phi)
+
+        def mix_Dortz(Le_F, Le_O, phi):
+            
+            if phi <= 0.6:
+                return Le_F
+            elif phi >= 1.2:
+                return Le_O
+            else:
+                Le_BM = mix_Bechtold(Le_F, Le_O, phi)
+                if phi <= 1.:
+                    return 2.5*(1.-phi)*Le_F+(2.5*phi-1.5)*Le_BM
+                else:
+                    return 2.5*(phi-1.)*Le_O+(3.5-2.5*phi)*Le_BM
+
+        phi = self.equivalence_ratio()
+
+        Le_spe_eff = self.Le_species_eff(type_idx)
+
+        Le_F = self.Le_fuel(Le_spe_eff)
+
+        Le_O = self.Le_oxidizer(Le_spe_eff)
+
+        switch = {'linear':mix_linear, 
+                  'erf':mix_erf,
+                  'Bechtold':mix_Bechtold,
+                  'Bechtold_cut':mix_Bechtold_cut,
+                  'Dortz':mix_Dortz}
+
+        Le_eff = switch.get(type_mix)(Le_F, Le_O, phi)
+
+        return Le_eff
+
 class CounterflowPremixedFlameState(PremixedFlameState):
 
-    def __init__(self, chemistry, fuel, solution, T):
+    def __init__(self, solution, chemistry, fuel, oxidizer={'O2':1., 'N2':3.76}, T=None):
+
+        self.chemistry = chemistry
 
         gas = ct.Solution(chemistry)
         flame = ct.CounterflowPremixedFlame(gas, width=0.1)
 
         flame.restore(solution, loglevel=0)
 
-        PremixedFlameState.__init__(self, flame, fuel, T)
+        PremixedFlameState.__init__(self, flame, fuel, oxidizer, T)
