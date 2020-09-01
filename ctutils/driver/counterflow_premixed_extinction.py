@@ -11,7 +11,6 @@ def counterflow_premixed_extinction(
     T = 300.,
     p = 1.,
     phi = 1.,
-    L_init = 0.05,
     **kwargs):
 
     # read kwargs
@@ -32,6 +31,11 @@ def counterflow_premixed_extinction(
         a_max = kwargs['a_max']
     else:
         a_max = 1.E+5
+
+    if 'L_init' in kwargs.keys():
+        L_init = kwargs['L_init']
+    else:
+        L_init = 0.05
 
     # factors
     # a_{n+1} = exp(f0) * a_n
