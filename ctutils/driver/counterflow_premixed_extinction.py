@@ -71,6 +71,8 @@ def counterflow_premixed_extinction(
 
     folder_name = fn.params2name(params)
 
+    pwd = os.getcwd()
+
     os.makedirs(folder_name, exist_ok=flag_folder)
     os.chdir(folder_name)
 
@@ -136,5 +138,7 @@ def counterflow_premixed_extinction(
             width = L,
             **kwargs
         )
+
+    os.chdir(pwd)
     
     return
