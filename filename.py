@@ -21,3 +21,10 @@ def name2params(name, s1='_', s2='-', default=None):
         except IndexError:
             params[key] = default
     return params
+
+def add_suffix(name, suffix):
+
+    if name.endswith(suffix):
+        return name
+
+    return '.'.join([name, suffix])

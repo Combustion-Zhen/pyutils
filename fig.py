@@ -91,3 +91,9 @@ class PlotConfig():
         ax = self.get_axes(fig)
 
         return fig, ax
+
+def close(fig):
+
+    plt.close(fig=fig)
+
+    return

@@ -79,7 +79,7 @@ def counterflow_premixed_extinction(
     # calculate free flame
     ctd.free_flame(
         chemistry=chemistry, 
-        fule=fuel, oxidizer=oxidizer, 
+        fuel=fuel, oxidizer=oxidizer, 
         pressure=p, temperature=T, phi=phi,
         **kwargs)
 
