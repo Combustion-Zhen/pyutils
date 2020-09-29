@@ -88,6 +88,18 @@ class PremixedFlameState:
 
         return delta
 
+    def diffusive_thickness(self):
+
+        kappa = self.flame.thermal_conductivity
+        cp = self.flame.cp
+        rho = self.flame.density
+
+        alpha = kappa / (rho*cp)
+
+        delta = alpha[0] / self.consumption_speed()
+
+        return delta
+
     def T_peak(self):
         return self.flame.T[self.__idx_fcr()]
 
