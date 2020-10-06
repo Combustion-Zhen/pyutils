@@ -238,7 +238,7 @@ class FreeFlameState(PremixedFlameState):
 
         self.chemistry = chemistry
 
-        gas = ct.Solution(chemistry)
+        gas = ct.Solution(chemistry, loglevel=0)
         flame = ct.FreeFlame(gas, width=0.1)
 
         flame.restore(solution, loglevel=0)
@@ -336,7 +336,7 @@ class CounterflowPremixedFlameState(PremixedFlameState):
 
         self.chemistry = chemistry
 
-        gas = ct.Solution(chemistry)
+        gas = ct.Solution(chemistry, loglevel=0)
         flame = ct.CounterflowPremixedFlame(gas, width=0.1)
 
         flame.restore(solution, loglevel=0)
