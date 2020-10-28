@@ -1,6 +1,7 @@
 import os
 import json
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 class PlotConfig():
     
@@ -48,9 +49,7 @@ class PlotConfig():
         plt.rc('text',usetex=True)
 
         plt.rc('text.latex', 
-               preamble=[r'\usepackage{amsmath}',
-                         r'\usepackage{bm}']
-               )
+               preamble=r'\usepackage{amsmath}\usepackage{bm}')
 
         # use serif font
         plt.rc('font',**font)

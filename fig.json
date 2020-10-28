@@ -21,6 +21,17 @@
         "subplot_ratio":0.9,
         "ftsize":16
     },
+    "slides_double":{
+        "plot_width":19.0,
+        "margin_left":1.8,
+        "margin_right":0.3,
+        "margin_bottom":1.6,
+        "margin_top":0.3,
+        "space_width":1.5,
+        "space_height":1.0,
+        "subplot_ratio":0.9,
+        "ftsize":16
+    },
     "PCI_single":{
         "plot_width":6.7,
         "margin_left":1.1,
