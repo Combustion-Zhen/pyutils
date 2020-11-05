@@ -63,7 +63,7 @@ class PlotConfig():
 
         figsize = self.__cm2inch(self.plot_width, self.plot_height)
 
-        fig = plt.figure(figsize=figsize, **kwargs)
+        fig = plt.figure(figsize=figsize, facecolor='w', **kwargs)
 
         return fig
 
