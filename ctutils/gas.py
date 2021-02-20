@@ -10,6 +10,11 @@ def mixture(chemistry, fuel, oxidizer, T, P, phi):
 
     return gas
 
+def multiply(gas, reaction_index, uncertainty_factor):
+    for k, v in enumerate(reaction_index):
+        gas.set_multiplier(uncertainty_factor[k], v)
+    return gas
+
 def parser_stream(stream):
 
     if isinstance( stream, dict ):

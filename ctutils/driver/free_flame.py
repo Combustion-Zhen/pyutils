@@ -107,3 +107,67 @@ def free_flame(
 
     return 0
 
+
+def free_flame_(
+        gas,
+        **kwargs
+        ):
+
+    # read kwargs
+    if 'transport' in kwargs.keys():
+        transport = kwargs['transport']
+    else:
+        transport = 'Mix'
+
+    if 'width' in kwargs.keys():
+        width = kwargs['width']
+    else:
+        width = 0.05
+
+    if 'loglevel' in kwargs.keys():
+        loglevel = kwargs['loglevel']
+    else:
+        # supress log output
+        loglevel = 0
+
+    # kwargs for flame solver
+    if 'ct_ratio' in kwargs.keys():
+        ct_ratio = kwargs['ct_ratio']
+    else:
+        ct_ratio = 2.
+
+    if 'ct_slope' in kwargs.keys():
+        ct_slope = kwargs['ct_slope']
+    else:
+        ct_slope = 0.1
+
+    if 'ct_curve' in kwargs.keys():
+        ct_curve = kwargs['ct_curve']
+    else:
+        ct_curve = 0.1
+
+    if 'ct_prune' in kwargs.keys():
+        ct_prune = kwargs['ct_prune']
+    else:
+        ct_prune = 0.05
+
+    # flame object
+    f = ct.FreeFlame( gas, width=width )
+
+    f.set_initial_guess(locs=np.linspace(0., 1., num=10))
+
+    f.set_refine_criteria(ratio=ct_ratio, 
+                          slope=ct_slope, 
+                          curve=ct_curve,
+                          prune=ct_prune)
+
+    f.soret_enabled = False
+    f.radiation_enabled = False
+    f.transport_model = transport
+
+    try:
+        f.solve( loglevel=loglevel, auto=True )
+    except Exception as e:
+        print('Error: not converge for case:',e)
+
+    return f
