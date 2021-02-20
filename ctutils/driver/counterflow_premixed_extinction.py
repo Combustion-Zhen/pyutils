@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pyutils.filename as fn
 import pyutils.ctutils.driver as ctd
+import pyutils.ctutils.flame as ctf
 
 def counterflow_premixed_extinction(
     chemistry = 'FFCM-1.cti',
@@ -142,3 +143,95 @@ def counterflow_premixed_extinction(
     os.chdir(pwd)
     
     return
+
+def counterflow_premixed_extinction_(
+    gas,
+    fuel = {'CH4':1.},
+    oxidizer = {'O2':1., 'N2':3.76},
+    T = 300.,
+    p = 101325.,
+    phi = 1.,
+    solution_name = 'tmp.xml',
+    **kwargs):
+
+    # read kwargs
+
+    # parameters to approach extinction
+    if 'a_init' in kwargs.keys():
+        a_init = kwargs['a_init']
+    else:
+        a_init = 100.
+        
+    if 'a_max' in kwargs.keys():
+        a_max = kwargs['a_max']
+    else:
+        a_max = 1.E+6
+
+    if 'L_init' in kwargs.keys():
+        L_init = kwargs['L_init']
+    else:
+        L_init = 0.05
+
+    # factors
+    # a_{n+1} = exp(f0) * a_n
+    if 'f0' in kwargs.keys():
+        f0 = kwargs['f0']
+    else:
+        f0 = 0.2
+
+    gas.set_equivalence_ratio(phi, fuel, oxidizer)
+    gas.TP = T, p
+    flame = ctd.free_flame_(gas, width=L_init)
+
+    fs_0 = ctf.PremixedFlameState(flame,fuel,oxidizer)
+    T_fs = fs_0.T_peak()
+    sc_0 = fs_0.consumption_speed()
+    dl_0 = fs_0.thermal_thickness()
+
+    # iterate to get the extinction
+    a = a_init
+    L = L_init
+    solution = None
+
+    # data containing dl, sc, I0, Ka
+    d = np.array([[dl_0, sc_0],[0., 1.]])
+
+    while True:
+
+        gas.set_equivalence_ratio(phi, fuel, oxidizer)
+        gas.TP = T, p
+
+        flame = ctd.counterflow_premixed_flame_(
+            gas,
+            a = a,
+            solution = solution,
+            width = L,
+            **kwargs
+        )
+
+        # update a and L
+        f0_a = np.exp(f0)
+        L /= np.power(f0_a, 0.5)
+        a *= f0_a
+
+        # solution for iteration
+        flame.save(solution_name)
+        solution = solution_name
+
+        # get state
+        fs_a = ctf.PremixedFlameState(flame,fuel,oxidizer,T_fs)
+
+        sc_a = fs_a.consumption_speed()
+        if sc_a < 1.0E-3:
+            break
+
+        I0_a = sc_a / sc_0
+        Ka_a = fs_a.strain_rate() * dl_0 / sc_0
+
+        #d.append([Ka_a, I0_a])
+        d = np.append(d, [[Ka_a, I0_a]], axis=0)
+
+        if a > a_max:
+            break
+
+    return d

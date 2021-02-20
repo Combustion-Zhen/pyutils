@@ -183,26 +183,12 @@ def counterflow_premixed_flame(
 
 # pass the reactant obj, return flame obj
 
-
-def counterflow_premixed_flame_obj(
-        chemistry = 'gri30.xml',
-        fuel = {'CH4':1.},
-        oxidizer = {'O2':1, 'N2':3.76},
-        temperature = 300.,
-        pressure = 1.,
-        phi = 1.,
+def counterflow_premixed_flame_(
+        gas,
         a = 1000.,
         solution = None,
         **kwargs
         ):
-
-    # for unrealistic parameters
-    if pressure < 0.:
-        raise ValueError('Negative pressure')
-    if temperature < 0.:
-        raise ValueError('Negative inlet temperature')
-    if phi < 0.:
-        raise ValueError('Negative equivalence ratio')
 
     # read kwargs
     if 'transport' in kwargs.keys():
@@ -230,50 +216,32 @@ def counterflow_premixed_flame_obj(
     if 'ct_slope' in kwargs.keys():
         ct_slope = kwargs['ct_slope']
     else:
-        ct_slope = 0.02
+        ct_slope = 0.1
 
     if 'ct_curve' in kwargs.keys():
         ct_curve = kwargs['ct_curve']
     else:
-        ct_curve = 0.02
+        ct_curve = 0.1
 
     if 'ct_prune' in kwargs.keys():
         ct_prune = kwargs['ct_prune']
     else:
-        ct_prune = 0.01
+        ct_prune = 0.05
 
     if 'ct_max_grids' in kwargs.keys():
         ct_max_grids = kwargs['ct_max_grids']
     else:
         ct_max_grids = 5000
 
-    # case name
-    params = {}
-    params['T'] = temperature
-    params['p'] = pressure
-    params['phi'] = phi
-    params['a'] = a
+    # Create flame object
+    f = ct.CounterflowPremixedFlame(gas=gas, width=width)
 
-    case = params2name(params)
-
-    # pressure
-    pressure *= ct.one_atm
-
-    # gas object
-    #gas = ct.Solution(chemistry)
-    # construct mixutre
-    #mixture = cg.mixture_two_streams(gas, fuel, oxidizer, phi)
     # unburnt stream
-    #gas.TPX = temperature, pressure, mixture
-    gas = cg.mixture(chemistry, fuel, oxidizer, temperature, pressure, phi)
-
     rho_u = gas.density
 
     # burnt stream
     gas.equilibrate('HP')
     rho_b = gas.density
-
-    gas = cg.mixture(chemistry, fuel, oxidizer, temperature, pressure, phi)
 
     # get inlet velocity based on the strain rate
     # $a_1=\dfrac{2U_1}{L}\left(1+\dfrac{U_2\sqrt{\rho_2}}{U_1\sqrt{\rho_1}}\right)$
@@ -288,11 +256,8 @@ def counterflow_premixed_flame_obj(
     m_u = rho_u * v_u
     m_b = rho_b * v_b
 
-    # Create flame object
-    f = ct.CounterflowPremixedFlame(gas=gas, width=width)
-
     f.transport_model = transport
-    f.P = pressure
+    f.P = gas.P
     f.reactants.mdot = m_u
     f.products.mdot = m_b
 
@@ -334,22 +299,4 @@ def counterflow_premixed_flame_obj(
 
     f.solve(loglevel=loglevel, auto=True)
 
-    HRR = f.heat_release_rate
-
-    idx = HRR.argmax()
-
-    if HRR[idx] > 1000 :
-
-        f.save('{}.xml'.format(case))
-
-        if f.u[idx] > 0 :
-
-            return 0
-
-        else :
-
-            return 2
-
-    else:
-
-        return 1
+    return f
