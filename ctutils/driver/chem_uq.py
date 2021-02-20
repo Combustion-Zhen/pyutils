@@ -36,7 +36,12 @@ def free_flame(
         flame = ctu.driver.free_flame_(gas)
         fs = ctu.flame.PremixedFlameState(flame, fuel)
 
-        sl[i] = fs.consumption_speed()
-        dl[i] = fs.thermal_thickness()
+        flame_speed = fs.consumption_speed()
+        flame_thickness = fs.thermal_thickness()
+
+        print(flame_speed, flame_thickness)
+
+        sl[i] = flame_speed
+        dl[i] = flame_thickness
 
     return sl, dl
