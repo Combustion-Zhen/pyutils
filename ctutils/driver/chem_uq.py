@@ -7,8 +7,7 @@ def free_flame(
         oxidizer = {'O2':1., 'N2':3.76},
         T = 300.,
         p = 101325.,
-        phi = 0.6,
-        **kwargs
+        phi = 0.6
         ):
     
     # for unrealistic parameters
@@ -36,12 +35,7 @@ def free_flame(
         flame = ctu.driver.free_flame_(gas)
         fs = ctu.flame.PremixedFlameState(flame, fuel)
 
-        flame_speed = fs.consumption_speed()
-        flame_thickness = fs.thermal_thickness()
-
-        print(flame_speed, flame_thickness)
-
-        sl[i] = flame_speed
-        dl[i] = flame_thickness
+        sl[i] = fs.consumption_speed()
+        dl[i] = fs.thermal_thickness()
 
     return sl, dl
