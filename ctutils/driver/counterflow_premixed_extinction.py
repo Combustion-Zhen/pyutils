@@ -187,14 +187,15 @@ def counterflow_premixed_extinction_(
     T_fs = fs_0.T_peak()
     sc_0 = fs_0.consumption_speed()
     dl_0 = fs_0.thermal_thickness()
+    Re_F = fs_0.Re()
+
+    # data containing dl, sc, Ka, Re_F
+    d = np.array([[dl_0, Re_F],[0., sc_0]])
 
     # iterate to get the extinction
     a = a_init
     L = L_init
     solution = None
-
-    # data containing dl, sc, I0, Ka
-    d = np.array([[dl_0, sc_0],[0., 1.]])
 
     while True:
 
@@ -221,15 +222,14 @@ def counterflow_premixed_extinction_(
         # get state
         fs_a = ctf.PremixedFlameState(flame,fuel,oxidizer,T_fs)
 
+        Ka_a = fs_a.strain_rate() * dl_0 / sc_0
+
         sc_a = fs_a.consumption_speed()
         if sc_a < 1.0E-3:
             break
 
-        I0_a = sc_a / sc_0
-        Ka_a = fs_a.strain_rate() * dl_0 / sc_0
-
         #d.append([Ka_a, I0_a])
-        d = np.append(d, [[Ka_a, I0_a]], axis=0)
+        d = np.append(d, [[Ka_a, sc_a]], axis=0)
 
         if a > a_max:
             break
