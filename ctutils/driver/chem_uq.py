@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pyutils.ctutils as ctu
 
@@ -47,7 +48,12 @@ def counterflow_premixed_extinction(
         T = 300.,
         p = 101325.,
         phi = 1.,
+        folder_name = 'tmp',
         **kwargs):
+
+    pwd = os.getcwd()
+    os.makedirs(folder_name, exist_ok=True)
+    os.chdir(folder_name)
     
     # for unrealistic parameters
     if p < 0.:
@@ -91,5 +97,8 @@ def counterflow_premixed_extinction(
                 a_init=a_init,a_max=a_max,L_init=L_init)
 
         d_all.append(d.transpose())
+
+    os.chdir(pwd)
+    os.rmdir(folder_name)
 
     return d_all

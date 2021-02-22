@@ -1,4 +1,3 @@
-
 import os
 import numpy as np
 import pyutils.filename as fn
@@ -233,5 +232,7 @@ def counterflow_premixed_extinction_(
 
         if a > a_max:
             break
+
+    os.remove(solution_name)
 
     return d
