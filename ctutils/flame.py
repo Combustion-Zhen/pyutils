@@ -1,6 +1,7 @@
 import numpy as np
 import cantera as ct
 import pyutils.ctutils as pc
+import pyutils.filename as fn
 from scipy.special import erfc
 
 class PremixedFlameState:
@@ -25,6 +26,9 @@ class PremixedFlameState:
 
     def fuel_list(self):
         return list(self.fuel.keys())
+
+    def expansion(self):
+        return self.flame.density[-1]/self.flame.density[0]
 
     def consumption_speed(self):
 
@@ -258,75 +262,88 @@ class FreeFlameState(PremixedFlameState):
         
     def Le_eff(self, type_idx='unburnt', type_mix='erf'):
 
-        def mix_linear(Le_F, Le_O, phi):
-            if phi < 0.8:
-                return Le_F
-            elif phi > 1.2:
-                return Le_O
-            else:
-                return (3.-2.5*phi)*Le_F+(2.5*phi-2.)*Le_O
+        params = {}
+        params['T'] = self.flame.T[0]
+        params['p'] = self.flame.P
+        params['phi'] = self.equivalence_ratio()
+        file_name = fn.params2name(params)+'_Le.npy'
 
-        def mix_erf(Le_F, Le_O, phi):
-            Ze = self.Ze()
-            phi_n = phi/(1.+phi)
-            x = Ze*(phi_n-0.5)*2.
-            f = erfc(x)
-            return Le_O + (Le_F-Le_O)*f/2.
-
-        def mix_Bechtold(Le_F, Le_O, phi):
-
-            Ze = self.Ze()
-
-            if phi < 1.:
-                phi_ = 1./phi
-                Le_E = Le_O
-                Le_D = Le_F
-            else:
-                phi_ = phi
-                Le_E = Le_F
-                Le_D = Le_O
-
-            A = 1. + Ze * ( phi_ - 1. )
-
-            return (Le_E+Le_D*A)/(1.+A)
-
-        def mix_Bechtold_cut(Le_F, Le_O, phi):
+        try:
+            Le_eff = np.load(file_name)
+        
+        except FileNotFoundError:
             
-            if phi < 0.8:
-                return Le_F
-            elif phi > 1.2:
-                return Le_O
-            else:
-                return mix_Bechtold(Le_F, Le_O, phi)
-
-        def mix_Dortz(Le_F, Le_O, phi):
-            
-            if phi <= 0.6:
-                return Le_F
-            elif phi >= 1.2:
-                return Le_O
-            else:
-                Le_BM = mix_Bechtold(Le_F, Le_O, phi)
-                if phi <= 1.:
-                    return 2.5*(1.-phi)*Le_F+(2.5*phi-1.5)*Le_BM
+            def mix_linear(Le_F, Le_O, phi):
+                if phi < 0.8:
+                    return Le_F
+                elif phi > 1.2:
+                    return Le_O
                 else:
-                    return 2.5*(phi-1.)*Le_O+(3.5-2.5*phi)*Le_BM
+                    return (3.-2.5*phi)*Le_F+(2.5*phi-2.)*Le_O
 
-        phi = self.equivalence_ratio()
+            def mix_erf(Le_F, Le_O, phi):
+                Ze = self.Ze()
+                phi_n = phi/(1.+phi)
+                x = Ze*(phi_n-0.5)*2.
+                f = erfc(x)
+                return Le_O + (Le_F-Le_O)*f/2.
 
-        Le_spe_eff = self.Le_species_eff(type_idx)
+            def mix_Bechtold(Le_F, Le_O, phi):
 
-        Le_F = self.Le_fuel(Le_spe_eff)
+                Ze = self.Ze()
 
-        Le_O = self.Le_oxidizer(Le_spe_eff)
+                if phi < 1.:
+                    phi_ = 1./phi
+                    Le_E = Le_O
+                    Le_D = Le_F
+                else:
+                    phi_ = phi
+                    Le_E = Le_F
+                    Le_D = Le_O
 
-        switch = {'linear':mix_linear, 
-                  'erf':mix_erf,
-                  'Bechtold':mix_Bechtold,
-                  'Bechtold_cut':mix_Bechtold_cut,
-                  'Dortz':mix_Dortz}
+                A = 1. + Ze * ( phi_ - 1. )
 
-        Le_eff = switch.get(type_mix)(Le_F, Le_O, phi)
+                return (Le_E+Le_D*A)/(1.+A)
+
+            def mix_Bechtold_cut(Le_F, Le_O, phi):
+                
+                if phi < 0.8:
+                    return Le_F
+                elif phi > 1.2:
+                    return Le_O
+                else:
+                    return mix_Bechtold(Le_F, Le_O, phi)
+
+            def mix_Dortz(Le_F, Le_O, phi):
+                
+                if phi <= 0.6:
+                    return Le_F
+                elif phi >= 1.2:
+                    return Le_O
+                else:
+                    Le_BM = mix_Bechtold(Le_F, Le_O, phi)
+                    if phi <= 1.:
+                        return 2.5*(1.-phi)*Le_F+(2.5*phi-1.5)*Le_BM
+                    else:
+                        return 2.5*(phi-1.)*Le_O+(3.5-2.5*phi)*Le_BM
+
+            phi = self.equivalence_ratio()
+
+            Le_spe_eff = self.Le_species_eff(type_idx)
+
+            Le_F = self.Le_fuel(Le_spe_eff)
+
+            Le_O = self.Le_oxidizer(Le_spe_eff)
+
+            switch = {'linear':mix_linear, 
+                    'erf':mix_erf,
+                    'Bechtold':mix_Bechtold,
+                    'Bechtold_cut':mix_Bechtold_cut,
+                    'Dortz':mix_Dortz}
+
+            Le_eff = switch.get(type_mix)(Le_F, Le_O, phi)
+
+            np.save(file_name,Le_eff)
 
         return Le_eff
 
