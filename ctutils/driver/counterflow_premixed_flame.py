@@ -216,17 +216,17 @@ def counterflow_premixed_flame_(
     if 'ct_slope' in kwargs.keys():
         ct_slope = kwargs['ct_slope']
     else:
-        ct_slope = 0.1
+        ct_slope = 0.2
 
     if 'ct_curve' in kwargs.keys():
         ct_curve = kwargs['ct_curve']
     else:
-        ct_curve = 0.1
+        ct_curve = 0.2
 
     if 'ct_prune' in kwargs.keys():
         ct_prune = kwargs['ct_prune']
     else:
-        ct_prune = 0.05
+        ct_prune = 0.1
 
     if 'ct_max_grids' in kwargs.keys():
         ct_max_grids = kwargs['ct_max_grids']
