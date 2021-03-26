@@ -236,6 +236,14 @@ class PremixedFlameState:
 
         return 0
 
+    def export_profile_YT(self, file_name='cema.inp'):
+        f = self.flame
+        data = np.zeros((f.grid.size, len(f.gas.species_names)+1))
+        data[:,:-1] = f.Y.transpose()
+        data[:,-1] = f.T
+        np.savetxt(file_name, data, fmt='%20.10E', delimiter='')
+        return 0
+
 class FreeFlameState(PremixedFlameState):
 
     def __init__(self, solution, chemistry, fuel, oxidizer={'O2':1., 'N2':3.76}):
