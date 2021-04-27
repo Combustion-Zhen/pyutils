@@ -7,6 +7,7 @@
     "syngas50":[{"CO":0.5, "H2":0.5}, "syngas_Davis.cti"],
     "syngas70":[{"CO":0.3, "H2":0.7}, "syngas_Davis.cti"],
     "syngas90":[{"CO":0.1, "H2":0.9}, "syngas_Davis.cti"],
+    "syngas":[{"CO":0.195, "H2":0.105}, "syngas_Davis.cti"],
     "methane":["CH4", "FFCM-1.cti"],
     "CH4":["CH4", "FFCM-1.cti"],
     "methane05":[{"CH4":0.95, "H2":0.05}, "FFCM-1.cti"],
