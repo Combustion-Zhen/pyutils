@@ -101,7 +101,7 @@ def counterflow_premixed_extinction(
         if flag == 2 :
 
             print('Strain rate = {:g} negative flame speed'.format(params['a']))
-            #break
+            break
 
         if flag == 3 :
 

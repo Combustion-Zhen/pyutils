@@ -37,6 +37,6 @@
     "iC8H18":["IC8H18", "isooctane_sk143.cti"],
     "ndodecane":["NC12H26", "ndodecane_sk53.cti"],
     "nC12H26":["NC12H26", "ndodecane_sk53.cti"],
-    "ammoniaE10":[{"CH4":0.78, "NH3":0.22}, "ammonia_Okafor_42.cti"],
-    "ammoniaE20":[{"CH4":0.61, "NH3":0.39}, "ammonia_Okafor_42.cti"]
+    "ammoniaE10":[{"CH4":0.78, "NH3":0.22}, "ammonia_Okafor_59.cti"],
+    "ammoniaE20":[{"CH4":0.61, "NH3":0.39}, "ammonia_Okafor_59.cti"]
 }
