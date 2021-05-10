@@ -25,7 +25,7 @@ def get_fuel_name(fuel, chemistry=None):
 
     return name
 
-def get_mechanism(fuel, chemistry=None):
+def get_mechanism(fuel, chemistry=None, mech_path=True):
 
     if chemistry is not None:
         return chemistry
@@ -34,12 +34,15 @@ def get_mechanism(fuel, chemistry=None):
 
     mech = default_mechanisms.get(fuel)[1]
 
-    return get_mech_path(mech)
+    if mech_path:
+        return get_mech_path(mech)
+    else:
+        return mech
 
-def get_fuel_mech(fuel, chemistry=None):
+def get_fuel_mech(fuel, chemistry=None, mech_path=True):
 
     fuels = get_fuel_name(fuel, chemistry)
-    mech = get_mechanism(fuel, chemistry)
+    mech = get_mechanism(fuel, chemistry, mech_path)
 
     return fuels, mech
 
