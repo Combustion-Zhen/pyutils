@@ -5,7 +5,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 class PlotConfig():
     
-    def __init__(self, config_name='slides_single', nrow=1, ncol=1, **kwargs):
+    def __init__(self, config_name='manuscript_single', nrow=1, ncol=1, **kwargs):
 
         path = os.path.abspath(os.path.dirname(__file__))
         defaults = os.path.join(path, 'fig.json')
