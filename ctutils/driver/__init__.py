@@ -6,3 +6,4 @@ from .counterflow_premixed_flame import counterflow_premixed_flame_
 from .counterflow_premixed_extinction import counterflow_premixed_extinction
 from .counterflow_premixed_extinction import counterflow_premixed_extinction_
 from .counterflow_twin_flame import counterflow_twin_flame
+from .counterflow_twin_extinction import counterflow_twin_extinction
