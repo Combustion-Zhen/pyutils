@@ -20,6 +20,10 @@ class PremixedFlameState:
         fcr = self.fuel_consumption_rate()
         return np.argmax(fcr)
 
+    def __idx_hrr(self):
+        hrr = self.flame.heat_release_rate
+        return np.argmax(hrr)
+
     def __idx_T(self):
         T = self.flame.T
         return np.argmax(T)
@@ -112,7 +116,8 @@ class PremixedFlameState:
         if self.T is not None:
             return np.interp(self.T, self.flame.T, self.flame.u)
 
-        return self.flame.u[self.__idx_fcr()]
+        #return self.flame.u[self.__idx_fcr()]
+        return self.flame.u[self.__idx_hrr()]
 
     def strain_rate(self):
         
@@ -121,7 +126,8 @@ class PremixedFlameState:
         if self.T is not None:
             return np.interp(self.T, self.flame.T, at)
 
-        return at[self.__idx_fcr()]
+        #return at[self.__idx_fcr()]
+        return at[self.__idx_hrr()]
     
     def Ka(self):
 
