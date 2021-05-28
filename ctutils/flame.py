@@ -119,6 +119,18 @@ class PremixedFlameState:
         #return self.flame.u[self.__idx_fcr()]
         return self.flame.u[self.__idx_hrr()]
 
+    def density_weighted_displacement_speed(self):
+
+        if self.T is not None:
+            x = np.interp(self.T, self.flame.T, self.flame.grid)
+        else:
+            x = self.flame.grid[self.__idx_hrr()]
+
+        rho = np.interp(x, self.flame.grid, self.flame.density)
+        sd = np.interp(x, self.flame.grid, self.flame.u)
+            
+        return rho*sd/self.flame.density[0]
+
     def strain_rate(self):
         
         at = 2. * self.flame.V
