@@ -360,3 +360,16 @@ class CounterflowPremixedFlameState(PremixedFlameState):
         flame.restore(solution, loglevel=0)
 
         PremixedFlameState.__init__(self, flame, fuel, oxidizer, T)
+
+class CounterflowTwinFlameState(PremixedFlameState):
+
+    def __init__(self, solution, chemistry, fuel, oxidizer={'O2':1., 'N2':3.76}, T=None):
+
+        self.chemistry = chemistry
+
+        gas = ct.Solution(chemistry, loglevel=0)
+        flame = ct.CounterflowTwinPremixedFlame(gas, width=0.1)
+
+        flame.restore(solution, loglevel=0)
+
+        PremixedFlameState.__init__(self, flame, fuel, oxidizer, T)
