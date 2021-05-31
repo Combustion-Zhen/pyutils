@@ -20,11 +20,6 @@ def counterflow_twin_extinction(
     else:
         a_init = 100.
         
-    if 'a_max' in kwargs.keys():
-        a_max = kwargs['a_max']
-    else:
-        a_max = 1.E+5
-
     if 'L_init' in kwargs.keys():
         L_init = kwargs['L_init']
     else:
@@ -68,6 +63,10 @@ def counterflow_twin_extinction(
             **kwargs
         )
 
+        hrr = flame.heat_release_rate.max()
+        if hrr < 1.0:
+            break
+
         params['a'] = a
         case = pu.filename.params2name(params)+'.xml'
 
@@ -79,15 +78,5 @@ def counterflow_twin_extinction(
         f0_a = np.exp(f0)
         L /= np.power(f0_a, 0.5)
         a *= f0_a
-
-        # get state
-        fs_a = pu.ctutils.flame.PremixedFlameState(flame,fuel,oxidizer)
-
-        sc_a = fs_a.consumption_speed()
-        if sc_a < 1.0E-2:
-            break
-
-        if a > a_max:
-            break
 
     return
