@@ -62,6 +62,20 @@ class PremixedFlameState:
 
         return sc
 
+    def thermal_consumption_speed(self):
+
+        flame = self.flame
+
+        T_u = flame.T[0]
+        T_b = flame.T[-1]
+
+        dT = flame.heat_release_rate/flame.cp
+        sum = np.trapz(dT, flame.grid)
+
+        sc = sum / (T_b-T_u) / flame.density[0]
+
+        return sc
+
     def mass_flux(self):
         return self.consumption_speed()*self.flame.density[0]
 
