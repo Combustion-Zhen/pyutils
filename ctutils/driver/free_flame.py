@@ -57,6 +57,11 @@ def free_flame_(
     else:
         transport = 'Mix'
 
+    if 'soret' in kwargs.keys():
+        flag_soret = kwargs['soret']
+    else:
+        flag_soret = False
+
     if 'width' in kwargs.keys():
         width = kwargs['width']
     else:
@@ -89,6 +94,11 @@ def free_flame_(
     else:
         ct_prune = 0.05
 
+    if 'ct_max_grids' in kwargs.keys():
+        ct_max_grids = kwargs['ct_max_grids']
+    else:
+        ct_max_grids = 5000
+
     # flame object
     f = ct.FreeFlame( gas, width=width )
 
@@ -99,12 +109,17 @@ def free_flame_(
                           curve=ct_curve,
                           prune=ct_prune)
 
+    f.set_max_grid_points(f.flame, ct_max_grids)
+
     f.soret_enabled = False
     f.radiation_enabled = False
-    f.transport_model = transport
+    f.transport_model = 'Mix'
 
     try:
         f.solve( loglevel=loglevel, auto=True )
+        f.transport_model = transport
+        f.soret_enabled = flag_soret
+        f.solve( loglevel=loglevel )
     except Exception as e:
         print('Error: not converge for case:',e)
 
