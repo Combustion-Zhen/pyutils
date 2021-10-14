@@ -10,6 +10,7 @@ def free_flame(
         temperature = 300.,
         pressure = 1.,
         phi = 1.,
+        inlet = 'left',
         **kwargs
         ):
 
@@ -35,7 +36,7 @@ def free_flame(
     # gas object
     gas = cg.mixture(chemistry, fuel, oxidizer, temperature, pressure, phi)
 
-    f = free_flame_(gas, **kwargs)
+    f = free_flame_(gas, inlet, **kwargs)
 
     # return for unburnt flame
     if np.max(f.T) < temperature + 100. :
@@ -45,9 +46,9 @@ def free_flame(
 
     return 0
 
-
 def free_flame_(
         gas,
+        inlet = 'left',
         **kwargs
         ):
 
@@ -100,9 +101,12 @@ def free_flame_(
         ct_max_grids = 5000
 
     # flame object
-    f = ct.FreeFlame( gas, width=width )
+    if ( inlet == 'right' ):
+        f = ct.OutwardFreeFlame( gas, width=width )
+    else:
+        f = ct.FreeFlame( gas, width=width )
 
-    f.set_initial_guess(locs=np.linspace(0., 1., num=10))
+    f.set_initial_guess()
 
     f.set_refine_criteria(ratio=ct_ratio, 
                           slope=ct_slope, 
@@ -111,9 +115,7 @@ def free_flame_(
 
     f.set_max_grid_points(f.flame, ct_max_grids)
 
-    f.soret_enabled = False
     f.radiation_enabled = False
-    f.transport_model = 'Mix'
 
     try:
         f.solve( loglevel=loglevel, auto=True )

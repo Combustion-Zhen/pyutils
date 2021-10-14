@@ -13,6 +13,11 @@ class PremixedFlameState:
         self.oxidizer = pc.gas.parser_stream(oxidizer)
         self.T = T
 
+        if flame.T[0] < flame.T[-1]:
+            self.density = flame.density[0]
+        else:
+            self.density = -flame.density[-1]
+
     def __idx_unburnt(self):
         return 0
 
@@ -58,7 +63,7 @@ class PremixedFlameState:
         fuel_rate_sum = np.sum( fuel_rate )
         fuel_mass_sum = np.sum( fuel_mass )
 
-        sc = fuel_rate_sum / ( flame.density[0] * fuel_mass_sum )
+        sc = fuel_rate_sum / ( self.density * fuel_mass_sum )
 
         return sc
 
@@ -72,7 +77,7 @@ class PremixedFlameState:
         dT = flame.heat_release_rate/flame.cp
         sum = np.trapz(dT, flame.grid)
 
-        sc = sum / (T_b-T_u) / flame.density[0]
+        sc = sum / (T_b-T_u) / self.density
 
         return sc
 
@@ -104,11 +109,11 @@ class PremixedFlameState:
         x = self.flame.grid
 
         T_grad = np.gradient( T, x )
-        T_grad_max = T_grad.max()
 
-        delta = ( T[-1] - T[0] ) / T_grad_max
-
-        return delta
+        if T[-1] > T[0]:
+            return ( T[-1] - T[0] ) / T_grad.max()
+        else:
+            return ( T[-1] - T[0] ) / T_grad.min()
 
     def diffusive_thickness(self):
 
@@ -118,9 +123,12 @@ class PremixedFlameState:
 
         alpha = kappa / (rho*cp)
 
-        delta = alpha[0] / self.consumption_speed()
+        sc = self.consumption_speed()
 
-        return delta
+        if self.flame.T[0] < self.flame.T[-1] :
+            return alpha[0] / sc
+        else:
+            return alpha[-1] / sc
 
     def T_peak(self):
         return self.flame.T[self.__idx_fcr()]
@@ -130,8 +138,7 @@ class PremixedFlameState:
         if self.T is not None:
             return np.interp(self.T, self.flame.T, self.flame.u)
 
-        #return self.flame.u[self.__idx_fcr()]
-        return self.flame.u[self.__idx_hrr()]
+        return self.flame.velocity[self.__idx_hrr()]
 
     def density_weighted_displacement_speed(self, T=None):
 
@@ -143,9 +150,9 @@ class PremixedFlameState:
             x = self.flame.grid[self.__idx_hrr()]
 
         rho = np.interp(x, self.flame.grid, self.flame.density)
-        sd = np.interp(x, self.flame.grid, self.flame.u)
+        sd = np.interp(x, self.flame.grid, self.flame.velocity)
             
-        return rho*sd/self.flame.density[0]
+        return rho*sd/self.density
 
     def strain_rate(self, T=None):
         
