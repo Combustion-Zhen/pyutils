@@ -10,7 +10,6 @@ def free_flame(
         temperature = 300.,
         pressure = 1.,
         phi = 1.,
-        inlet = 'left',
         **kwargs
         ):
 
@@ -48,11 +47,15 @@ def free_flame(
 
 def free_flame_(
         gas,
-        inlet = 'left',
         **kwargs
         ):
 
     # read kwargs
+    if 'direct' in kwargs.keys():
+        direct = kwargs['direct']
+    else:
+        direct = 'left'
+    
     if 'transport' in kwargs.keys():
         transport = kwargs['transport']
     else:
@@ -101,10 +104,7 @@ def free_flame_(
         ct_max_grids = 5000
 
     # flame object
-    if ( inlet == 'right' ):
-        f = ct.OutwardFreeFlame( gas, width=width )
-    else:
-        f = ct.FreeFlame( gas, width=width )
+    f = ct.FreeFlame( gas, width=width, direct=direct )
 
     f.set_initial_guess()
 
