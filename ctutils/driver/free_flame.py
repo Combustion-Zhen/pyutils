@@ -35,7 +35,7 @@ def free_flame(
     # gas object
     gas = cg.mixture(chemistry, fuel, oxidizer, temperature, pressure, phi)
 
-    f = free_flame_(gas, inlet, **kwargs)
+    f = free_flame_(gas, **kwargs)
 
     # return for unburnt flame
     if np.max(f.T) < temperature + 100. :
@@ -54,7 +54,7 @@ def free_flame_(
     if 'direct' in kwargs.keys():
         direct = kwargs['direct']
     else:
-        direct = 'left'
+        direct = 'inward'
     
     if 'transport' in kwargs.keys():
         transport = kwargs['transport']
