@@ -156,7 +156,10 @@ class PremixedFlameState:
 
     def strain_rate(self, T=None):
         
-        at = 2. * self.flame.V
+        if float(ct.__version__[:3]) <=2.4:
+            at = 2. * self.flame.V
+        else:
+            at = 2. * self.flame.spread_rate
 
         if T is not None:
             return np.interp(T, self.flame.T, at)
