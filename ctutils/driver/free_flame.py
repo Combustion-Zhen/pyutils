@@ -54,7 +54,7 @@ def free_flame_(
     if 'direct' in kwargs.keys():
         direct = kwargs['direct']
     else:
-        direct = 'inward'
+        direct = None
     
     if 'transport' in kwargs.keys():
         transport = kwargs['transport']
@@ -104,7 +104,10 @@ def free_flame_(
         ct_max_grids = 5000
 
     # flame object
-    f = ct.FreeFlame( gas, width=width, direct=direct )
+    if direct is None:
+        f = ct.FreeFlame( gas, width=width )
+    else:
+        f = ct.FreeFlame( gas, width=width, direct=direct )
 
     f.set_initial_guess()
 
