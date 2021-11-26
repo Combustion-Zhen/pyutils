@@ -136,7 +136,7 @@ class PremixedFlameState:
     def displacement_speed(self):
 
         if self.T is not None:
-            return np.interp(self.T, self.flame.T, self.flame.u)
+            return np.interp(self.T, self.flame.T, self.flame.velocity)
 
         return self.flame.velocity[self.__idx_hrr()]
 
