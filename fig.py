@@ -54,6 +54,10 @@ class PlotConfig():
         # use serif font
         plt.rc('font',**font)
 
+        #
+        plt.rc('xtick', direction='in')
+        plt.rc('ytick', direction='in')
+
     # cm inch transfer for matplotlib
     def __cm2inch(self, *tupl):
         inch = 2.54

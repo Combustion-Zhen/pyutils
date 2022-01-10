@@ -133,12 +133,42 @@ class PremixedFlameState:
     def T_peak(self):
         return self.flame.T[self.__idx_fcr()]
 
-    def displacement_speed(self):
+    def flame_location(self, T=None, direction='inward'):
 
-        if self.T is not None:
-            return np.interp(self.T, self.flame.T, self.flame.velocity)
+        if T is None and self.T is None:
+            return self.flame.grid[self.__idx_hrr()]
+        elif T is not None:
+            T_flame = T
+        else:
+            T_flame = self.T
 
-        return self.flame.velocity[self.__idx_hrr()]
+        if direction == 'inward':
+            flameT = self.flame.T
+            flameG = self.flame.grid
+        else:
+            flameT = self.flame.T[::-1]
+            flameG = self.flame.grid[::-1]
+
+        return np.interp(T_flame, flameT, flameG)
+
+
+    def displacement_speed(self, T=None, direction='inward'):
+
+        if T is None and self.T is None:
+            return self.flame.velocity[self.__idx_hrr()]
+        elif T is not None:
+            T_flame = T
+        else:
+            T_flame = self.T
+
+        if direction == 'inward':
+            flameT = self.flame.T
+            flameV = self.flame.velocity
+        else:
+            flameT = self.flame.T[::-1]
+            flameV = self.flame.velocity[::-1]
+
+        return np.interp(T_flame, flameT, flameV)
 
     def density_weighted_displacement_speed(self, T=None):
 
@@ -386,6 +416,19 @@ class FreeFlameState(PremixedFlameState):
         Le_eff = switch.get(type_mix)(Le_F, Le_O, phi)
 
         return Le_eff
+
+class FreePolarFlameState(PremixedFlameState):
+    
+    def __init__(self, solution, chemistry, fuel, oxidizer={'O2':0.21, 'N2':0.79}, T=None):
+        
+        self.chemistry = chemistry
+
+        gas = ct.Solution(chemistry, loglevel=0)
+        flame = ct.FreePolarFlame(gas, width=0.2)
+
+        flame.restore(solution, loglevel=0)
+
+        PremixedFlameState.__init__(self, flame, fuel, oxidizer, T)
 
 class CounterflowPremixedFlameState(PremixedFlameState):
 
