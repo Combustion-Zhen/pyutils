@@ -417,6 +417,20 @@ class FreeFlameState(PremixedFlameState):
 
         return Le_eff
 
+class ForcedPolarFlameState(PremixedFlameState):
+    
+    def __init__(self, solution, chemistry, fuel, oxidizer={'O2':0.21, 'N2':0.79}, direct='inward', T=None):
+        
+        self.chemistry = chemistry
+
+        gas = ct.Solution(chemistry, loglevel=0)
+        flame = ct.ForcedPolarFlame(gas, width=0.2, direct=direct)
+
+        flame.restore(solution, loglevel=0)
+
+        PremixedFlameState.__init__(self, flame, fuel, oxidizer, T)
+
+
 class FreePolarFlameState(PremixedFlameState):
     
     def __init__(self, solution, chemistry, fuel, oxidizer={'O2':0.21, 'N2':0.79}, T=None):

@@ -1,3 +1,6 @@
+import os
+import shutil
+
 def params2name(params, s1='_', s2='-'):
     params_str = []
     for k, v in params.items():
@@ -28,3 +31,10 @@ def add_suffix(name, suffix):
         return name
 
     return '.'.join([name, suffix])
+
+def make_dir(path):
+
+    if os.path.exists(path):
+        shutil.rmtree(path)
+
+    os.mkdir(path)
