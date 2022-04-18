@@ -38,17 +38,17 @@ def counterflow_twin_flame(
     if 'ct_slope' in kwargs.keys():
         ct_slope = kwargs['ct_slope']
     else:
-        ct_slope = 0.2
+        ct_slope = 0.1
 
     if 'ct_curve' in kwargs.keys():
         ct_curve = kwargs['ct_curve']
     else:
-        ct_curve = 0.2
+        ct_curve = 0.1
 
     if 'ct_prune' in kwargs.keys():
         ct_prune = kwargs['ct_prune']
     else:
-        ct_prune = 0.1
+        ct_prune = 0.05
 
     if 'ct_max_grids' in kwargs.keys():
         ct_max_grids = kwargs['ct_max_grids']
@@ -89,7 +89,7 @@ def counterflow_twin_flame(
         solution_width = f.grid[-1] - f.grid[0]
         width_factor = width / solution_width
 
-        solution_a = 4.*f.u[0]/solution_width
+        solution_a = 4.*f.velocity[0]/solution_width
         a_factor = a / solution_a
 
         normalized_grid = f.grid / solution_width
@@ -98,8 +98,8 @@ def counterflow_twin_flame(
 
         # update solution initialization following Fiala & Sattelmayer
         f.flame.grid = normalized_grid * width
-        f.set_profile('u', normalized_grid, f.u*u_factor)
-        f.set_profile('V', normalized_grid, f.V*a_factor)
+        f.set_profile('velocity', normalized_grid, f.velocity*u_factor)
+        f.set_profile('spread_rate', normalized_grid, f.spread_rate*a_factor)
         f.set_profile('lambda', normalized_grid, f.L*np.square(a_factor))
 
         f.reactants.mdot = mass_flux

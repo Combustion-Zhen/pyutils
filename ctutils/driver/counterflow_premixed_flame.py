@@ -35,6 +35,11 @@ def counterflow_premixed_flame(
     else:
         transport = 'Mix'
 
+    if 'soret' in kwargs.keys():
+        soret = kwargs['soret']
+    else:
+        soret = False
+
     if 'width' in kwargs.keys():
         width = kwargs['width']
     else:
@@ -117,6 +122,7 @@ def counterflow_premixed_flame(
     f = ct.CounterflowPremixedFlame(gas=gas, width=width)
 
     f.transport_model = transport
+    f.soret_enabled = soret
     f.P = pressure
     f.reactants.mdot = m_u
     f.products.mdot = m_b
@@ -137,7 +143,7 @@ def counterflow_premixed_flame(
         solution_width = f.grid[-1] - f.grid[0]
         width_factor = width / solution_width
 
-        solution_a = 4.*f.u[0]/solution_width
+        solution_a = 4.*f.velocity[0]/solution_width
         a_factor = a / solution_a
 
         normalized_grid = f.grid / solution_width
@@ -146,8 +152,8 @@ def counterflow_premixed_flame(
 
         # update solution initialization following Fiala & Sattelmayer
         f.flame.grid = normalized_grid * width
-        f.set_profile('u', normalized_grid, f.u*u_factor)
-        f.set_profile('V', normalized_grid, f.V*a_factor)
+        f.set_profile('velocity', normalized_grid, f.velocity*u_factor)
+        f.set_profile('spread_rate', normalized_grid, f.spread_rate*a_factor)
         f.set_profile('lambda', normalized_grid, f.L*np.square(a_factor))
 
         f.reactants.mdot = m_u
@@ -167,7 +173,7 @@ def counterflow_premixed_flame(
 
         f.save('{}.xml'.format(case))
 
-        if f.u[idx] > 0 :
+        if f.velocity[idx] > 0 :
 
             return 0
 
@@ -277,7 +283,7 @@ def counterflow_premixed_flame_(
         solution_width = f.grid[-1] - f.grid[0]
         width_factor = width / solution_width
 
-        solution_a = 4.*f.u[0]/solution_width
+        solution_a = 4.*f.velocity[0]/solution_width
         a_factor = a / solution_a
 
         normalized_grid = f.grid / solution_width
@@ -286,8 +292,8 @@ def counterflow_premixed_flame_(
 
         # update solution initialization following Fiala & Sattelmayer
         f.flame.grid = normalized_grid * width
-        f.set_profile('u', normalized_grid, f.u*u_factor)
-        f.set_profile('V', normalized_grid, f.V*a_factor)
+        f.set_profile('velocity', normalized_grid, f.velocity*u_factor)
+        f.set_profile('spread_rate', normalized_grid, f.spread_rate*a_factor)
         f.set_profile('lambda', normalized_grid, f.L*np.square(a_factor))
 
         f.reactants.mdot = m_u

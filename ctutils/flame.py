@@ -273,7 +273,7 @@ class PremixedFlameState:
     def equivalence_ratio(self):
         gas = self.flame.gas
         gas.TPY = gas.T, gas.P, self.flame.Y[:,0]
-        return gas.get_equivalence_ratio()
+        return gas.equivalence_ratio()
 
     def export_profile(self, file_name='premix.dat', unit='cgs'):
 
@@ -332,6 +332,7 @@ class FreeFlameState(PremixedFlameState):
 
         PremixedFlameState.__init__(self, flame, fuel, oxidizer)
 
+    """
     def Ze(self, perturb=0.01, **kwargs):
 
         chemistry = self.chemistry
@@ -342,6 +343,15 @@ class FreeFlameState(PremixedFlameState):
         phi = self.equivalence_ratio()
 
         return pc.Ze(chemistry, fuel, oxidizer, T, p, phi, perturb, **kwargs)
+    """
+    def Ze(self):
+
+        tempu = self.flame.T[0]
+        tempb = self.flame.T[-1]
+        ddT = np.gradient(np.gradient(self.flame.T, self.flame.grid), self.flame.grid)
+        temp0 = self.flame.T[ddT.argmax()]
+
+        return 4*(tempb-tempu)/(tempb-temp0)
         
     def Le_eff(self, type_idx='unburnt', type_mix='erf'):
 
