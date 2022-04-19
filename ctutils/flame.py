@@ -3,6 +3,7 @@ import cantera as ct
 import pyutils.ctutils as pc
 import pyutils.filename as fn
 from scipy.special import erfc
+from scipy.signal import argrelextrema
 
 class PremixedFlameState:
 
@@ -32,6 +33,16 @@ class PremixedFlameState:
     def __idx_T(self):
         T = self.flame.T
         return np.argmax(T)
+
+    def idx_ref(self):
+        u = self.flame.velocity[:self.__idx_hrr()]
+        # find the local minima
+        idx = argrelextrema(u, np.less)
+        if not idx[0].any():
+            x = self.flame.grid[:self.__idx_hrr()]
+            du = np.gradient(u, x)
+            idx = argrelextrema(du, np.greater)
+        return idx
 
     def fuel_list(self):
         return list(self.fuel.keys())
@@ -170,6 +181,10 @@ class PremixedFlameState:
 
         return np.interp(T_flame, flameT, flameV)
 
+    def displacement_speed_ref(self):
+
+        return self.flame.velocity[self.idx_ref()]
+
     def density_weighted_displacement_speed(self, T=None):
 
         if T is not None:
@@ -197,6 +212,10 @@ class PremixedFlameState:
             return np.interp(self.T, self.flame.T, at)
         else:
             return at[self.__idx_hrr()]
+
+    def strain_rate_ref(self):
+
+        return 2.*self.flame.spread_rate[self.idx_ref()]
     
     def Ka(self):
 
