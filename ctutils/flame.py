@@ -375,6 +375,10 @@ class FreeFlameState(PremixedFlameState):
         temp0 = self.flame.T[ddT.argmax()]
 
         return 4*(tempb-tempu)/(tempb-temp0)
+
+    def Ma(self):
+        
+        return 1/self.Le_eff() + self.Ze()/2*(1-1/self.Le_eff())
         
     def Le_eff(self, type_idx='unburnt', type_mix='erf'):
 

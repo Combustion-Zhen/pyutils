@@ -84,7 +84,7 @@ def counterflow_twin_extinction(
 
         hrr = flame.heat_release_rate.max()
         if hrr < 1.0:
-            print('Strain rate {} extinction'.format(a))
+            print('Strain rate {:g} extinction'.format(a))
             f0 /= f1
             f0_a = np.exp(f0)
             a = a_old * f0_a
@@ -94,7 +94,7 @@ def counterflow_twin_extinction(
                 break
             continue
 
-        print('Strain rate {} success'.format(a))
+        print('Strain rate {:g} success'.format(a))
         # solution for iteration
         params['a'] = a
         case = pu.filename.params2name(params)+'.xml'
