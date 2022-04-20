@@ -35,14 +35,18 @@ class PremixedFlameState:
         return np.argmax(T)
 
     def idx_ref(self):
+        flag = 0
         u = self.flame.velocity
         # find the local minima
         idx = argrelextrema(u, np.less)
         if not idx[0].any():
+            flag = 1
             x = self.flame.grid
             du = np.gradient(u, x)
             idx = argrelextrema(du, np.greater)
-        return idx[0][0]
+            if not idx[0].any():
+                flag = 2
+        return idx[0][0], flag
 
     def fuel_list(self):
         return list(self.fuel.keys())
@@ -182,8 +186,8 @@ class PremixedFlameState:
         return np.interp(T_flame, flameT, flameV)
 
     def displacement_speed_ref(self):
-
-        return self.flame.velocity[self.idx_ref()]
+        idx, flag = self.idx_ref()
+        return self.flame.velocity[idx]
 
     def density_weighted_displacement_speed(self, T=None):
 
@@ -214,8 +218,8 @@ class PremixedFlameState:
             return at[self.__idx_hrr()]
 
     def strain_rate_ref(self):
-
-        return 2.*self.flame.spread_rate[self.idx_ref()]
+        idx, flag = self.idx_ref()
+        return 2.*self.flame.spread_rate[idx]
     
     def Ka(self):
 
