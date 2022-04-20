@@ -42,7 +42,7 @@ class PremixedFlameState:
             x = self.flame.grid
             du = np.gradient(u, x)
             idx = argrelextrema(du, np.greater)
-        return idx[0]
+        return idx[0][0]
 
     def fuel_list(self):
         return list(self.fuel.keys())
