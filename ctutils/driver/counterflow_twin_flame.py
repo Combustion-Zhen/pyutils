@@ -18,6 +18,11 @@ def counterflow_twin_flame(
     else:
         transport = 'Mix'
 
+    if 'soret' in kwargs.keys():
+        soret = kwargs['soret']
+    else:
+        soret = False
+
     if 'width' in kwargs.keys():
         width = kwargs['width']
     else:
@@ -70,6 +75,7 @@ def counterflow_twin_flame(
     f = ct.CounterflowTwinPremixedFlame(gas=gas, width=width)
 
     f.transport_model = transport
+    f.soret_enabled = soret
     f.P = gas.P
     f.reactants.mdot = mass_flux
 

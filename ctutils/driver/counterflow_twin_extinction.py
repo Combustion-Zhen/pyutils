@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import cantera as ct
 import pyutils as pu
@@ -13,6 +14,12 @@ def counterflow_twin_extinction(
     **kwargs):
 
     # read kwargs
+
+    # IO flags
+    if 'folder_overwrite' in kwargs.keys():
+        flag_folder = kwargs['folder_overwrite']
+    else:
+        flag_folder = True
 
     # parameters to approach extinction
     if 'a_init' in kwargs.keys():
@@ -30,53 +37,77 @@ def counterflow_twin_extinction(
     if 'f0' in kwargs.keys():
         f0 = kwargs['f0']
     else:
-        f0 = 0.2
+        f0 = 0.1
+
+    # f0_{n+1} = f0_n / f1
+    if 'f1' in kwargs.keys():
+        f1 = kwargs['f1']
+    else:
+        f1 = 2.0
+
+    # a_threshold_n = a_n * f2
+    if 'f2' in kwargs.keys():
+        f2 = kwargs['f2']
+    else:
+        f2 = 1.E-3
 
     params = {}
     params['T'] = T
     params['p'] = p
     params['phi'] = phi
 
+    folder_name = pu.filename.params2name(params)
+    pwd = os.getcwd()
+
+    os.makedirs(folder_name, exist_ok=flag_folder)
+    os.chdir(folder_name)
+
+    pu.ctutils.driver.free_flame(
+        chemistry=chemistry, 
+        fuel=fuel, oxidizer=oxidizer, 
+        pressure=p, temperature=T, phi=phi,
+        **kwargs)
+
     pressure = p * ct.one_atm
-
-    gas = pu.ctutils.gas.mixture(chemistry, fuel, oxidizer, T, pressure, phi)
-
-    flame = pu.ctutils.driver.free_flame_(gas, width=L_init)
-
-    case = pu.filename.params2name(params)+'.xml'
-
-    flame.save(case)
-
     # iterate to get the extinction
     a = a_init
     L = L_init
+    a_old = 0
+    L_old = L
 
     while True:
 
         gas = pu.ctutils.gas.mixture(chemistry, fuel, oxidizer, T, pressure, phi)
-
         flame = pu.ctutils.driver.counterflow_twin_flame(
-            gas,
-            a = a,
-            solution = solution,
-            width = L,
-            **kwargs
+            gas, a = a, solution = solution, width = L, **kwargs
         )
 
         hrr = flame.heat_release_rate.max()
         if hrr < 1.0:
-            break
+            print('Strain rate {} extinction'.format(a))
+            f0 /= f1
+            f0_a = np.exp(f0)
+            a = a_old * f0_a
+            L = L_old / np.power(f0_a, 0.5)
+            if (a - a_old) < (f2 * a_old):
+                print('Iteration stop')
+                break
+            continue
 
+        print('Strain rate {} success'.format(a))
+        # solution for iteration
         params['a'] = a
         case = pu.filename.params2name(params)+'.xml'
-
-        # solution for iteration
         flame.save(case)
         solution = case
 
+        a_old = a
+        L_old = L
+
         # update a and L
         f0_a = np.exp(f0)
-        L /= np.power(f0_a, 0.5)
         a *= f0_a
+        L /= np.power(f0_a, 0.5)
 
+    os.chdir(pwd)
     return
