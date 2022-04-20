@@ -35,14 +35,14 @@ class PremixedFlameState:
         return np.argmax(T)
 
     def idx_ref(self):
-        u = self.flame.velocity[:self.__idx_hrr()]
+        u = self.flame.velocity
         # find the local minima
         idx = argrelextrema(u, np.less)
         if not idx[0].any():
-            x = self.flame.grid[:self.__idx_hrr()]
+            x = self.flame.grid
             du = np.gradient(u, x)
             idx = argrelextrema(du, np.greater)
-        return idx
+        return idx[0]
 
     def fuel_list(self):
         return list(self.fuel.keys())
