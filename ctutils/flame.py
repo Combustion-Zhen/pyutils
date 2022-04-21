@@ -45,7 +45,7 @@ class PremixedFlameState:
             du = np.gradient(u, x)
             idx = argrelextrema(du, np.greater)
             if not idx[0].any():
-                flag = 2
+                return 0, 2
         return idx[0][0], flag
 
     def fuel_list(self):
@@ -187,6 +187,8 @@ class PremixedFlameState:
 
     def displacement_speed_ref(self):
         idx, flag = self.idx_ref()
+        if flag == 2:
+            return 0
         return self.flame.velocity[idx]
 
     def density_weighted_displacement_speed(self, T=None):
@@ -219,6 +221,8 @@ class PremixedFlameState:
 
     def strain_rate_ref(self):
         idx, flag = self.idx_ref()
+        if flag == 2:
+            return 0
         return 2.*self.flame.spread_rate[idx]
     
     def Ka(self):
