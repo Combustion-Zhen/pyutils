@@ -28,7 +28,7 @@ def counterflow_premixed_free(
         Ka_init = 2.
         
     if 'Ka_min' in kwargs.keys():
-        Ka_min = kwargs['Ka_max']
+        Ka_min = kwargs['Ka_min']
     else:
         Ka_min = 0.02
 
