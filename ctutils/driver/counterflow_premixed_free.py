@@ -44,6 +44,11 @@ def counterflow_premixed_free(
     else:
         f0 = 0.1
 
+    if 'restart' in kwargs.keys():
+        rest = kwargs['restart']
+    else:
+        rest = False
+
     # for unrealistic parameters
     if p < 0.:
         raise ValueError('Negative pressure')
@@ -99,6 +104,8 @@ def counterflow_premixed_free(
 
         flame_name = fn.params2name(params)
         solution = '{}.xml'.format(flame_name)
+        if rest:
+            solution = None
 
         f0_a = np.exp( f0 )
         L *= np.power(f0_a, 0.5)

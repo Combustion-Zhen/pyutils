@@ -56,6 +56,11 @@ def counterflow_premixed_extinction(
     else:
         f2 = 1.E-3
 
+    if 'restart' in kwargs.keys():
+        rest = kwargs['restart']
+    else:
+        rest = False
+
     # for unrealistic parameters
     if p < 0.:
         raise ValueError('Negative pressure')
@@ -113,6 +118,8 @@ def counterflow_premixed_extinction(
             print('Strain rate = {:g} success'.format(params['a']))
             flame_name = fn.params2name(params)
             solution = '{}.xml'.format(flame_name)
+            if rest:
+                solution = None
 
             a_old = params['a']
             L_old = L
