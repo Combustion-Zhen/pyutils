@@ -37,6 +37,11 @@ def counterflow_premixed_extinction(
     else:
         L_init = 0.05
 
+    if 'L_factor' in kwargs.keys():
+        L_factor = kwargs['L_factor']
+    else:
+        L_factor = 0.8
+
     # factors
     # a_{n+1} = exp(f0) * a_n
     if 'f0' in kwargs.keys():
@@ -126,7 +131,7 @@ def counterflow_premixed_extinction(
 
             f0_a = np.exp( f0 )
 
-            L = L_old / np.power(f0_a, 0.5)
+            L = L_old / np.power(f0_a, L_factor)
             params['a'] = a_old * f0_a
 
             a_diff = params['a'] - a_old
@@ -178,6 +183,11 @@ def counterflow_premixed_extinction_(
     else:
         L_init = 0.05
 
+    if 'L_factor' in kwargs.keys():
+        L_factor = kwargs['L_factor']
+    else:
+        L_factor = 0.8
+
     # factors
     # a_{n+1} = exp(f0) * a_n
     if 'f0' in kwargs.keys():
@@ -218,7 +228,7 @@ def counterflow_premixed_extinction_(
 
         # update a and L
         f0_a = np.exp(f0)
-        L /= np.power(f0_a, 0.5)
+        L /= np.power(f0_a, L_factor)
         a *= f0_a
 
         # solution for iteration

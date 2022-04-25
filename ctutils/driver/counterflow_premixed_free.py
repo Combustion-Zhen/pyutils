@@ -37,6 +37,11 @@ def counterflow_premixed_free(
     else:
         L_init = 0.001
 
+    if 'L_factor' in kwargs.keys():
+        L_factor = kwargs['L_factor']
+    else:
+        L_factor = 0.8
+
     # factors
     # a_{n+1} = exp(f0) * a_n
     if 'f0' in kwargs.keys():
@@ -108,7 +113,7 @@ def counterflow_premixed_free(
             solution = None
 
         f0_a = np.exp( f0 )
-        L *= np.power(f0_a, 0.5)
+        L *= np.power(f0_a, L_factor)
         a /= f0_a
 
         if a * dl0 / sc0 < Ka_min :
