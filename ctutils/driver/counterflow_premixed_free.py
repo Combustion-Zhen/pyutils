@@ -40,7 +40,7 @@ def counterflow_premixed_free(
     if 'L_factor' in kwargs.keys():
         L_factor = kwargs['L_factor']
     else:
-        L_factor = 0.8
+        L_factor = 0.75
 
     # factors
     # a_{n+1} = exp(f0) * a_n

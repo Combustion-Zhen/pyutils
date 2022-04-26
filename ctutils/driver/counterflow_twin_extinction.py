@@ -32,6 +32,11 @@ def counterflow_twin_extinction(
     else:
         L_init = 0.05
 
+    if 'L_factor' in kwargs.keys():
+        L_factor = kwargs['L_factor']
+    else:
+        L_factor = 0.75
+
     # factors
     # a_{n+1} = exp(f0) * a_n
     if 'f0' in kwargs.keys():
@@ -88,7 +93,7 @@ def counterflow_twin_extinction(
             f0 /= f1
             f0_a = np.exp(f0)
             a = a_old * f0_a
-            L = L_old / np.power(f0_a, 0.5)
+            L = L_old / np.power(f0_a, L_factor)
             if (a - a_old) < (f2 * a_old):
                 print('Iteration stop')
                 break
