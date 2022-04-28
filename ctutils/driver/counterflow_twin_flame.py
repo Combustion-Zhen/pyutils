@@ -66,7 +66,7 @@ def counterflow_twin_flame(
     # with $\rho_1 U_1^2 = \rho_2 U_2^2$
     # $a_1=\dfrac{4U_1}{L}$ $a_2=\dfrac{4U_2}{L}$
     # set stream 1 and 2 for unburnt and equilibrium status respectively
-    v = a * width / 4.
+    v = a * width / 2.
 
     # mass rate
     mass_flux = gas.density * v
