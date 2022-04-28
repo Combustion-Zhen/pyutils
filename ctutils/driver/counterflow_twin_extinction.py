@@ -35,7 +35,7 @@ def counterflow_twin_extinction(
     if 'L_factor' in kwargs.keys():
         L_factor = kwargs['L_factor']
     else:
-        L_factor = 0.75
+        L_factor = 0.5
 
     # factors
     # a_{n+1} = exp(f0) * a_n
@@ -55,6 +55,11 @@ def counterflow_twin_extinction(
         f2 = kwargs['f2']
     else:
         f2 = 1.E-3
+
+    if 'restart' in kwargs.keys():
+        rest = kwargs['restart']
+    else:
+        rest = False
 
     params = {}
     params['T'] = T
@@ -105,6 +110,8 @@ def counterflow_twin_extinction(
         case = pu.filename.params2name(params)+'.xml'
         flame.save(case)
         solution = case
+        if rest:
+            solution = None
 
         a_old = a
         L_old = L

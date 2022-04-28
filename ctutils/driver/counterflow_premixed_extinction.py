@@ -40,7 +40,7 @@ def counterflow_premixed_extinction(
     if 'L_factor' in kwargs.keys():
         L_factor = kwargs['L_factor']
     else:
-        L_factor = 0.75
+        L_factor = 0.5
 
     # factors
     # a_{n+1} = exp(f0) * a_n
