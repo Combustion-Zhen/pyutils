@@ -380,6 +380,14 @@ class FreeFlameState(PremixedFlameState):
 
         return 4*(tempb-tempu)/(tempb-temp0)
 
+    def nTb(self):
+        
+        tempu = self.flame.T[0]
+        tempb = self.flame.T[-1]
+
+        return tempb / ( tempb - tempu)
+        
+
     def Ma(self):
         
         return 1/self.Le_eff() + self.Ze()/2*(1-1/self.Le_eff())
