@@ -96,6 +96,21 @@ class PremixedFlameState:
 
         return sc
 
+    def oxidizer_consumption_speed(self):
+
+        flame = self.flame
+
+        index = flame.gas.species_index('O2')
+
+        rate = - ( np.trapz(flame.net_production_rates[index], flame.grid)
+                  *flame.gas.molecular_weights[index] )
+
+        mass = flame.Y[index, 0] - flame.Y[index,-1]
+
+        sc = rate / (self.density * mass)
+
+        return sc
+
     def mass_flux(self):
         return self.consumption_speed()*self.flame.density[0]
 
