@@ -202,9 +202,7 @@ class PremixedFlameState:
 
     def displacement_speed_ref(self):
         idx, flag = self.idx_ref()
-        if flag == 2:
-            return 0
-        return self.flame.velocity[idx]
+        return self.flame.velocity[idx], flag
 
     def density_weighted_displacement_speed(self, T=None):
 
