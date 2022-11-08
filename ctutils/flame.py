@@ -54,6 +54,12 @@ class PremixedFlameState:
     def expansion(self):
         return self.flame.density[-1]/self.flame.density[0]
 
+    def expansion_hrr(self):
+        return self.flame.density[self.__idx_hrr()]/self.flame.density[0]
+
+    def expansion_fcr(self):
+        return self.flame.density[self.__idx_fcr()]/self.flame.density[0]
+
     def consumption_speed(self):
 
         flame = self.flame
