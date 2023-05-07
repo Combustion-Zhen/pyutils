@@ -54,11 +54,11 @@ class PremixedFlameState:
     def expansion(self):
         return self.flame.density[-1]/self.flame.density[0]
 
-    def expansion_hrr(self):
-        return self.flame.density[self.__idx_hrr()]/self.flame.density[0]
+    def sigma_hrr(self):
+        return self.flame.density[0]/self.flame.density[self.__idx_hrr()]
 
-    def expansion_fcr(self):
-        return self.flame.density[self.__idx_fcr()]/self.flame.density[0]
+    def sigma_fcr(self):
+        return self.flame.density[0]/self.flame.density[self.__idx_fcr()]
 
     def consumption_speed(self):
 
@@ -405,7 +405,37 @@ class FreeFlameState(PremixedFlameState):
         tempb = self.flame.T[-1]
 
         return tempb / ( tempb - tempu)
-        
+
+    """
+    calculate the difference of Ma between the consumption speed and displacement speed
+    Giannakopoulos et al., CNF, 2019
+    """
+    def Ma_diff(self):
+
+        T = self.flame.T
+        kappa = self.flame.thermal_conductivity
+
+        ns = T[-1] / T[0]
+        nT = T / T[0]
+        nL = kappa / kappa[0]
+
+        fcr = self.fuel_consumption_rate()
+        idx = np.argmax(fcr)
+
+        func_0 = nL/nT
+        func_1 = nL/(nT-1)
+
+        int_0 = np.trapz(func_0, nT) * ns / (ns-1)
+        int_1 = np.trapz(func_0[:idx+1], nT[:idx+1])
+        int_2 = np.trapz(func_1[idx:], nT[idx:])
+
+        L_diff_curv = int_0 - int_1
+        L_diff_strain = L_diff_curv - int_2
+
+        Ma_diff_curv = L_diff_curv * self.diffusive_thickness() / self.thermal_thickness()
+        Ma_diff_strain = L_diff_strain * self.diffusive_thickness() / self.thermal_thickness()
+
+        return Ma_diff_strain, Ma_diff_curv
 
     def Ma(self):
         
