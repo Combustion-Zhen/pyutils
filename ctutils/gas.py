@@ -78,3 +78,61 @@ def stoichiometric_nu(gas, stream):
         nu_stream += nu * v
 
     return nu_stream
+
+def specific_mole_number_element(gas, element):
+    """
+    calculate the specific mole number of an element in a mixture
+    """
+
+    return gas.elemental_mass_fraction(element)/gas.atomic_weight(element)
+
+def specific_mole_number_elements(gas, definition='Bilger'):
+    """
+    calculate the specific mole number of elements with 
+    the coefficient by Bilger 2 C 0.5 H -1 O
+    """
+
+    if definition == 'Bilger':
+        elements = 'CHO'
+    else:
+        elements = definition
+
+    z = 0.0
+    for element in elements:
+        if element == 'C':
+            c = 2.0
+        elif element == 'H':
+            c = 0.5
+        elif element == 'O':
+            c = -1.0
+        else:
+            raise ValueError('Invalid element name')
+        z += c*specific_mole_number_element(gas, element)
+
+    return z
+
+def mixture_fraction(gas, fuel, oxidizer, definition='Bilger'):
+
+    zG = specific_mole_number_elements(gas, definition)
+    zF = specific_mole_number_elements(fuel, definition)
+    zO = specific_mole_number_elements(oxidizer, definition)
+
+    return (zG-zO)/(zF-zO)
+
+def progress_variable_normalized(gas, unburnt, burnt, definition='4spe'):
+
+    cG = progress_variable(gas, definition)
+    cU = progress_variable(unburnt, definition)
+    cB = progress_variable(burnt, definition)
+
+    return (cG-cB)/(cU-cB)
+
+def progress_variable(gas, definition=['CO2', 'CO', 'H2O', 'H2']):
+
+    if definition == 'T':
+        return gas.T
+    else:
+        c = 0.0
+        for spe in definition:
+            c += gas.Y[gas.species_index(spe)]
+        return c
