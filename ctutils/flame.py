@@ -224,6 +224,29 @@ class PremixedFlameState:
             
         return rho*sd/self.density
 
+    def progress_variable(self, definition):
+
+        flame = self.flame
+
+        c = np.zeros(flame.T.size) 
+        if definition == 'T':
+            c += self.flame.T
+        else:
+            for spe in definition:
+                index = flame.gas.species_index(spe)
+                c += flame.Y[index]
+
+        return c
+
+    def progress_variable_normalized(self, definition):
+
+        c = self.progress_variable(definition)
+
+        cu = c[0]
+        cb = c[-1]
+
+        return (c-cu)/(cb-cu)
+
     def strain_rate(self, T=None):
         
         if float(ct.__version__[:3]) <=2.4:
