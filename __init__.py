@@ -1,3 +1,6 @@
 from . import filename
 from . import fig
-from . import ctutils
+try:
+    from . import ctutils
+except:
+    pass
